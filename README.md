@@ -1,4 +1,6 @@
+![icon](https://github.com/user-attachments/assets/858127b9-5bc0-43dd-87b2-66ae771028cb)
 # Cobblemon Book Wiki
+
 
 ![Minecraft 1.21.1](https://img.shields.io/badge/Minecraft-1.21.1-blue.svg)  
 ![Cobblemon 1.6.1](https://img.shields.io/badge/Cobblemon-1.6.1-blue.svg)  
