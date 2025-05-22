@@ -33,6 +33,6 @@ A small Fabric mod for Minecraft 1.21.1 + Cobblemon 1.6.1 that adds an in-game w
 - **Fabric Loader**: 0.16.14  
 - **Fabric API**: 0.116.0+1.21.1  
 - **Cobblemon**: 1.6.1  
-- **Sgui**: 1.6.1+1.21.1
+- **[Sgui: 1.6.1+1.21.1](https://github.com/Patbox/sgui/releases/tag/1.6.1%2B1.21.1)**
 
 
