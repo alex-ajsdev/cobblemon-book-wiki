@@ -10,9 +10,9 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import eu.pb4.sgui.api.gui.BookGui;
 import net.ajsdev.cobblemonbookwiki.book.WikiBookBuilder;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.network.chat.Component;
 
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
@@ -37,7 +37,7 @@ public class WikiCommand {
     // Handles: /wiki (without arguments)
     private static int executeWithoutArguments(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         ServerPlayer player = ctx.getSource().getPlayerOrException();
-        player.sendSystemMessage(Component.literal("Použij /wiki <pokemon> [forma] nebo /webwiki pro naši webovou wiki"));
+        player.sendSystemMessage(Component.literal("Use /wiki <pokemon> [form]"));
         return 0;
     }
 
