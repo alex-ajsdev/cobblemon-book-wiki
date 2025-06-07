@@ -1,8 +1,11 @@
 package net.ajsdev.cobblemonbookwiki.book.page;
 
+import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.api.conditional.RegistryLikeCondition;
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties;
+import com.cobblemon.mod.common.api.pokemon.PokemonSpecies;
 import com.cobblemon.mod.common.api.spawning.CobblemonSpawnPools;
+import com.cobblemon.mod.common.api.spawning.TimeRange;
 import com.cobblemon.mod.common.api.spawning.condition.*;
 import com.cobblemon.mod.common.api.spawning.detail.PokemonSpawnDetail;
 import com.cobblemon.mod.common.pokemon.FormData;
@@ -21,13 +24,11 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import static com.cobblemon.mod.common.util.ResourceLocationExtensionsKt.asIdentifierDefaultingNamespace;
 import static java.util.Objects.requireNonNullElse;
 
 public class SpawnDetailPage {
@@ -47,6 +48,9 @@ public class SpawnDetailPage {
                 .filter(spawnDetail -> {
                     PokemonProperties pp = spawnDetail.getPokemon();
                     if (pp.getSpecies() == null) return false;
+                    Species resolvedSpecies = PokemonSpecies.INSTANCE.getByIdentifier(asIdentifierDefaultingNamespace(
+                            pp.getSpecies(), Cobblemon.MODID));
+                    if (species != resolvedSpecies) return false;
                     Pokemon pokemon = pp.create();
                     return pokemon.getSpecies().getName().equals(species.getName()) &&
                             pokemon.getForm().getName().equals(formData.getName());
@@ -201,6 +205,17 @@ public class SpawnDetailPage {
             }
         }
 
+        TimeRange timeRange = cond.getTimeRange();
+        if (timeRange != null) {
+            String timeName = "custom";
+            for (Map.Entry<String, TimeRange> entry : TimeRange.Companion.getTimeRanges().entrySet()) {
+                if (entry.getValue().getRanges().equals(timeRange.getRanges())) {
+                    timeName = entry.getKey();
+                    break;
+                }
+            }
+            hover.append(String.format("Time: %s\n", timeName));
+        }
 
         Set<RegistryLikeCondition<Biome>> biomeConds = cond.getBiomes();
         if (biomeConds != null && !biomeConds.isEmpty()) {
