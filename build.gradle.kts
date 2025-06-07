@@ -45,7 +45,6 @@ dependencies {
     modImplementation("com.cobblemon:fabric:${cobblemon_version}")
 
     modImplementation("eu.pb4:sgui:1.6.1+1.21.1")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.15.2")
 }
 
 
