@@ -10,6 +10,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import eu.pb4.sgui.api.gui.BookGui;
 import net.ajsdev.cobblemonbookwiki.book.WikiBookBuilder;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 
@@ -20,6 +21,7 @@ import static net.minecraft.commands.Commands.literal;
 public class WikiCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(literal("wiki")
+                .executes(WikiCommand::executeWithoutArguments)
                 .then(
                         argument("species", SpeciesArgumentType.Companion.species())
                                 .executes(WikiCommand::executeWithStandardForm)
@@ -30,6 +32,13 @@ public class WikiCommand {
                                 )
                 )
         );
+    }
+
+    // Handles: /wiki (without arguments)
+    private static int executeWithoutArguments(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        ServerPlayer player = ctx.getSource().getPlayerOrException();
+        player.sendSystemMessage(Component.literal("Use /wiki <pokemon> [form]"));
+        return 0;
     }
 
     // Handles: /wiki <species>
@@ -50,15 +59,11 @@ public class WikiCommand {
 
 
     private static int sendWikiBook(ServerPlayer player, FormData formData) {
-
         ItemStack book = WikiBookBuilder.build(formData, player.registryAccess());
         BookGui gui = new BookGui(player, book);
         gui.open();
-
         return 1;
     }
-
-
 }
 
 
