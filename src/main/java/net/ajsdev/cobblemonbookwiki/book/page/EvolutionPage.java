@@ -2,7 +2,7 @@ package net.ajsdev.cobblemonbookwiki.book.page;
 
 import com.cobblemon.mod.common.api.conditional.RegistryLikeCondition;
 import com.cobblemon.mod.common.api.pokemon.evolution.Evolution;
-import com.cobblemon.mod.common.api.pokemon.evolution.requirement.EvolutionRequirement;
+import com.cobblemon.mod.common.api.pokemon.requirement.Requirement;
 import com.cobblemon.mod.common.pokemon.FormData;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.cobblemon.mod.common.pokemon.evolution.variants.BlockClickEvolution;
@@ -11,18 +11,19 @@ import com.cobblemon.mod.common.pokemon.evolution.variants.LevelUpEvolution;
 import com.cobblemon.mod.common.pokemon.evolution.variants.TradeEvolution;
 import com.cobblemon.mod.common.registry.BlockIdentifierCondition;
 import com.cobblemon.mod.common.registry.BlockTagCondition;
-import com.cobblemon.mod.common.registry.ItemIdentifierCondition;
-import com.cobblemon.mod.common.registry.ItemTagCondition;
 import net.ajsdev.cobblemonbookwiki.book.WikiBookBuilder;
 import net.ajsdev.cobblemonbookwiki.util.EvolutionRequirementUtil;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.HolderSet;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.*;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class EvolutionPage {
 
@@ -69,20 +70,25 @@ public class EvolutionPage {
 
                 case ItemInteractionEvolution iie: {
                     hover.append("Use Item Evolution\n");
-                    RegistryLikeCondition<Item> cond = iie.getRequiredContext().getItem();
-                    String itemString = "unknown";
-                    if (cond instanceof ItemTagCondition itc)
-                        itemString = itc.getTag().location().getPath();
-                    if (cond instanceof ItemIdentifierCondition iic)
-                        itemString = iic.getIdentifier().getPath();
-                    MutableComponent iieComponent = Component.literal("- Item: " + itemString);
-                    hover.append(iieComponent);
+                    Optional<HolderSet<Item>> items = iie.getRequiredContext().items();
+
+                    if (items.isPresent()) {
+                        items.get().stream().forEach(itemHolder -> {
+                            Item item = itemHolder.value();
+                            Component itemName = item.getName(new ItemStack(item));
+                            MutableComponent iieComponent = Component.literal("- Item: ").append(itemName);
+                            hover.append(iieComponent);
+                        });
+                    } else {
+                        MutableComponent iieComponent = Component.literal("- Item: unknown");
+                        hover.append(iieComponent);
+                    }
                     break;
                 }
                 default: {
                     hover.append("Unknown?\n");
                 }
-                ;
+
             }
 
 
@@ -90,7 +96,7 @@ public class EvolutionPage {
             if (!evolution.getRequirements().isEmpty()) {
                 hover.append(Component.literal("Requirements: \n").withStyle(ChatFormatting.BOLD));
 
-                for (EvolutionRequirement req : evolution.getRequirements()) {
+                for (Requirement req : evolution.getRequirements()) {
                     hover.append(Component.literal(EvolutionRequirementUtil.getReadableString(req, ra)))
                             .append("\n");
 

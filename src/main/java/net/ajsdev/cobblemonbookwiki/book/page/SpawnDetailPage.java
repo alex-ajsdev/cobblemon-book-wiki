@@ -48,7 +48,7 @@ public class SpawnDetailPage {
                 .filter(spawnDetail -> {
                     PokemonProperties pp = spawnDetail.getPokemon();
                     if (pp.getSpecies() == null) return false;
-                    Species resolvedSpecies = PokemonSpecies.INSTANCE.getByIdentifier(asIdentifierDefaultingNamespace(
+                    Species resolvedSpecies = PokemonSpecies.getByIdentifier(asIdentifierDefaultingNamespace(
                             pp.getSpecies(), Cobblemon.MODID));
                     if (species != resolvedSpecies) return false;
                     Pokemon pokemon = pp.create();
@@ -81,7 +81,7 @@ public class SpawnDetailPage {
             String levelRange = String.format("%s - %s", sd.getLevelRange().getFirst(), sd.getLevelRange().getEndInclusive());
             page.append(Component.literal(String.format("Level %s\n", levelRange)));
         }
-        page.append(Component.literal(String.format("%s \n\n", StringUtils.capitalize(sd.getContext().getName()))));
+        page.append(Component.literal(String.format("%s \n\n", StringUtils.capitalize(sd.getDisplayName()))));
 
         MutableComponent condHover = Component.empty();
         condHover.append("Conditions:\n");

@@ -3,21 +3,21 @@ package net.ajsdev.cobblemonbookwiki.util;
 import com.cobblemon.mod.common.api.conditional.RegistryLikeCondition;
 import com.cobblemon.mod.common.api.moves.MoveTemplate;
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties;
-import com.cobblemon.mod.common.api.pokemon.evolution.requirement.EvolutionRequirement;
+import com.cobblemon.mod.common.api.pokemon.requirement.Requirement;
 import com.cobblemon.mod.common.api.spawning.TimeRange;
 import com.cobblemon.mod.common.api.spawning.condition.MoonPhase;
 import com.cobblemon.mod.common.api.types.ElementalType;
-import com.cobblemon.mod.common.pokemon.evolution.requirements.*;
-import com.cobblemon.mod.common.registry.ItemIdentifierCondition;
-import com.cobblemon.mod.common.registry.ItemTagCondition;
+import com.cobblemon.mod.common.pokemon.requirements.*;
 import com.cobblemon.mod.common.registry.StructureIdentifierCondition;
 import com.cobblemon.mod.common.registry.StructureTagCondition;
 import kotlin.ranges.IntRange;
+import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.phys.AABB;
@@ -26,10 +26,11 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 
 public class EvolutionRequirementUtil {
-    public static String getReadableString(EvolutionRequirement req, RegistryAccess ra) {
+    public static String getReadableString(Requirement req, RegistryAccess ra) {
         switch (req) {
             case AreaRequirement ar: {
                 AABB box = ar.getBox();
@@ -115,13 +116,17 @@ public class EvolutionRequirementUtil {
                 );
             }
             case HeldItemRequirement hir: {
-                RegistryLikeCondition<Item> cond = hir.getItemCondition().getItem();
-                String itemString = "Unknown";
-                if (cond instanceof ItemTagCondition itc)
-                    itemString = itc.getTag().location().getPath();
-                if (cond instanceof ItemIdentifierCondition iic)
-                    itemString = iic.getIdentifier().getPath();
-                return "Held item: " + itemString;
+                Optional<HolderSet<Item>> cond = hir.getItemCondition().items();
+                if (cond.isEmpty()) return "Held Item: Unknown";
+
+                List<String> itemNames = cond.get().stream()
+                        .map(holder -> {
+                            Item item = holder.value();
+                            return item.getName(new ItemStack(item)).getString();
+                        })
+                        .toList();
+
+                return "Held item: [" + String.join(", ", itemNames) + "]";
             }
             case LevelRequirement lr: {
                 int min = lr.getMinLevel();
@@ -169,7 +174,7 @@ public class EvolutionRequirementUtil {
                         ? String.format("Party must contain %s", name)
                         : String.format("Party must not contain %s", name);
             }
-            case PlayerHasAdvancementRequirement phr: {
+            case AdvancementRequirement phr: {
                 ResourceLocation adv = phr.getRequiredAdvancement();
                 String displayName = StringUtils.capitalize(
                         adv.getPath().replace('/', ' ').replace('_', ' ')
