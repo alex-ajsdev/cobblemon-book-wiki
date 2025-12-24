@@ -15,6 +15,7 @@ import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -28,309 +29,250 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-
 public class EvolutionRequirementUtil {
+
     public static String getReadableString(Requirement req, RegistryAccess ra) {
-        switch (req) {
-            case AreaRequirement ar: {
-                AABB box = ar.getBox();
-                Vec3 min = box.getMinPosition();
-                Vec3 max = box.getMaxPosition();
-                return String.format(
-                        "Within area from (%.1f, %.1f, %.1f) to (%.1f, %.1f, %.1f)",
-                        min.x, min.y, min.z,
-                        max.x, max.y, max.z
-                );
-            }
-            case AttackDefenceRatioRequirement adr: {
-                return switch (adr.getRatio()) {
-                    case ATTACK_HIGHER -> "Attack is higher than defence";
-                    case DEFENCE_HIGHER -> "Defence is higher than attack";
-                    case EQUAL -> "Attack equals defence";
-                };
-            }
-            case BattleCriticalHitsRequirement bchr: {
-                int amount = bchr.getAmount();
-                return String.format(
-                        "At least %d critical hits in a single battle",
-                        amount
-                );
-            }
-            case BiomeRequirement br: {
-                RegistryLikeCondition<Biome> cond = br.getBiomeCondition();
-                RegistryLikeCondition<Biome> anti = br.getBiomeAnticondition();
-                Registry<Biome> biomeRegistry = ra.registryOrThrow(Registries.BIOME);
-                List<String> allowedBiomes = new ArrayList<>();
-                List<String> deniedBiomes = new ArrayList<>();
 
-                biomeRegistry.keySet().forEach(rl -> {
-                    Biome biome = biomeRegistry.get(rl);
-                    if (cond != null && cond.fits(biome, biomeRegistry)) allowedBiomes.add(rl.getPath());
-                    if (anti != null && anti.fits(biome, biomeRegistry)) deniedBiomes.add(rl.getPath());
-                });
+        if (req instanceof AreaRequirement ar) {
+            AABB box = ar.getBox();
+            Vec3 min = box.getMinPosition();
+            Vec3 max = box.getMaxPosition();
+            return Component.translatable(
+                    "cobblemon_book_wiki.req.area",
+                    min.x, min.y, min.z,
+                    max.x, max.y, max.z
+            ).getString();
+        }
 
-
-                if (!allowedBiomes.isEmpty() && !deniedBiomes.isEmpty()) {
-                    return String.format(
-                            "In biomes: %s; not in biomes: %s",
-                            String.join(", ", allowedBiomes),
-                            String.join(", ", deniedBiomes)
-                    );
-                } else if (!allowedBiomes.isEmpty()) {
-                    return "In biomes: " + String.join(", ", allowedBiomes);
-                } else if (!deniedBiomes.isEmpty()) {
-                    return "Not in biomes: " + String.join(", ", deniedBiomes);
-                } else {
-                    return "Any biome";
-                }
-            }
-            case BlocksTraveledRequirement btr: {
-                int amount = btr.getAmount();
-                return String.format(
-                        "Traveled at least %d blocks",
-                        amount
-                );
-            }
-            case DamageTakenRequirement dtr: {
-                int amount = dtr.getAmount();
-                return String.format(
-                        "Taken at least %d damage",
-                        amount
-                );
-            }
-            case DefeatRequirement dr: {
-                PokemonProperties target = dr.getTarget();
-                int amount = dr.getAmount();
-                return String.format(
-                        "Defeat %d %s%s",
-                        amount,
-                        target.getOriginalString(),
-                        amount == 1 ? "" : "s"
-                );
-            }
-            case FriendshipRequirement fr: {
-                int amount = fr.getAmount();
-                return String.format(
-                        "Friendship at least %d",
-                        amount
-                );
-            }
-            case HeldItemRequirement hir: {
-                Optional<HolderSet<Item>> cond = hir.getItemCondition().items();
-                if (cond.isEmpty()) return "Held Item: Unknown";
-
-                List<String> itemNames = cond.get().stream()
-                        .map(holder -> {
-                            Item item = holder.value();
-                            return item.getName(new ItemStack(item)).getString();
-                        })
-                        .toList();
-
-                return "Held item: [" + String.join(", ", itemNames) + "]";
-            }
-            case LevelRequirement lr: {
-                int min = lr.getMinLevel();
-                int max = lr.getMaxLevel();
-                if (max == Integer.MAX_VALUE) {
-                    return String.format(
-                            "Reach at least level %d",
-                            min
-                    );
-                } else {
-                    return String.format(
-                            "Reach level %d to %d",
-                            min,
-                            max
-                    );
-                }
-            }
-            case MoonPhaseRequirement mpr: {
-                MoonPhase phase = mpr.getMoonPhase();
-                String name = phase.name().toLowerCase().replace('_', ' ');
-                return String.format("During %s", name);
-            }
-            case MoveSetRequirement msr: {
-                MoveTemplate mt = msr.getMove();
-                String moveName = mt.getName();
-                return String.format(
-                        "Knows move %s",
-                        StringUtils.capitalize(moveName)
-                );
-            }
-            case MoveTypeRequirement mtr: {
-                ElementalType type = mtr.getType();
-                // e.g. "fire" → "Fire"
-                String displayName = StringUtils.capitalize(type.getName().toLowerCase());
-                return String.format(
-                        "Has a %s-type move",
-                        displayName
-                );
-            }
-            case PartyMemberRequirement pmr: {
-                PokemonProperties target = pmr.getTarget();
-                boolean contains = pmr.getContains();
-                String name = StringUtils.capitalize(target.getOriginalString().toLowerCase());
-                return contains
-                        ? String.format("Party must contain %s", name)
-                        : String.format("Party must not contain %s", name);
-            }
-            case AdvancementRequirement phr: {
-                ResourceLocation adv = phr.getRequiredAdvancement();
-                String displayName = StringUtils.capitalize(
-                        adv.getPath().replace('/', ' ').replace('_', ' ')
-                );
-                return String.format(
-                        "Completed advancement %s:%s",
-                        adv.getNamespace(),
-                        displayName
-                );
-            }
-            case PokemonPropertiesRequirement ppr: {
-                PokemonProperties target = ppr.getTarget();
-                return String.format(
-                        "Properties must match: %s",
-                        target.getOriginalString()
-                );
-            }
-            case PropertyRangeRequirement prr: {
-                String featureKey = prr.getFeature();
-                IntRange range = prr.getRange();
-                int min = range.getStart();
-                int max = range.getEndInclusive();
-                if (min == max) {
-                    return String.format("%s must be %d", featureKey, min);
-                } else {
-                    return String.format("%s must be between %d and %d", featureKey, min, max);
-                }
-            }
-            case RecoilRequirement rr: {
-                int amount = rr.getAmount();
-                return String.format(
-                        "Accumulated at least %d recoil damage without fainting",
-                        amount
-                );
-            }
-            case StatCompareRequirement scr: {
-                String high = StringUtils.capitalize(scr.getHighStat().toLowerCase());
-                String low = StringUtils.capitalize(scr.getLowStat().toLowerCase());
-                return String.format(
-                        "%s must be higher than %s",
-                        high,
-                        low
-                );
-            }
-            case StatEqualRequirement ser: {
-                String one = StringUtils.capitalize(ser.getStatOne().toLowerCase());
-                String two = StringUtils.capitalize(ser.getStatTwo().toLowerCase());
-                return String.format(
-                        "%s must equal %s",
-                        one,
-                        two
-                );
-            }
-            case StructureRequirement sr: {
-                RegistryLikeCondition<Structure> cond = sr.getStructureCondition();
-                RegistryLikeCondition<Structure> anti = sr.getStructureAnticondition();
-
-                List<String> allowed = new ArrayList<>();
-                List<String> denied = new ArrayList<>();
-
-
-                if (cond instanceof StructureTagCondition stc)
-                    allowed.add(stc.getTag().location().getPath());
-                if (cond instanceof StructureIdentifierCondition sic)
-                    allowed.add(sic.getIdentifier().getPath());
-                if (anti instanceof StructureTagCondition stc)
-                    denied.add(stc.getTag().location().getPath());
-                if (anti instanceof StructureIdentifierCondition sic)
-                    denied.add(sic.getIdentifier().getPath());
-
-                if (!allowed.isEmpty() && !denied.isEmpty()) {
-                    return String.format(
-                            "In structures: %s; not in structures: %s",
-                            String.join(", ", allowed),
-                            String.join(", ", denied)
-                    );
-                } else if (!allowed.isEmpty()) {
-                    return "In structures: " + String.join(", ", allowed);
-                } else if (!denied.isEmpty()) {
-                    return "Not in structures: " + String.join(", ", denied);
-                } else {
-                    return "Any structure";
-                }
-            }
-            case TimeRangeRequirement tr: {
-                TimeRange timeRange = tr.getRange();
-                List<String> segments = new ArrayList<>();
-
-                // Assume TimeRange inherits a getRanges() method returning List<IntRange>
-                for (IntRange r : timeRange.getRanges()) {
-                    int startTick = r.getStart();
-                    int endTick = r.getEndInclusive();
-
-                    // convert ticks to clock time: 0 ticks = 06:00, 1000 ticks = 1h
-                    int startHour = (startTick / 1000 + 6) % 24;
-                    int startMin = (int) ((startTick % 1000) * 60 / 1000.0);
-                    int endHour = (endTick / 1000 + 6) % 24;
-                    int endMin = (int) ((endTick % 1000) * 60 / 1000.0);
-
-                    segments.add(String.format("%02d:%02d–%02d:%02d",
-                            startHour, startMin,
-                            endHour, endMin));
-                }
-
-                if (segments.isEmpty()) {
-                    return "Any time of day";
-                } else if (segments.size() == 1) {
-                    return "Active between " + segments.getFirst();
-                } else {
-                    // multiple windows, join with commas
-                    return "Active between " + String.join(", ", segments);
-                }
-            }
-            case UseMoveRequirement umr: {
-                MoveTemplate move = umr.getMove();
-                int amount = umr.getAmount();
-                String moveName = StringUtils.capitalize(move.getName().toLowerCase());
-                return String.format(
-                        "Use move %s %d times",
-                        moveName,
-                        amount
-                );
-            }
-            case WeatherRequirement wr: {
-                Boolean raining = wr.isRaining();
-                Boolean thundering = wr.isThundering();
-                List<String> parts = new ArrayList<>();
-
-                if (raining != null) {
-                    parts.add(raining ? "raining" : "not raining");
-                }
-                if (thundering != null) {
-                    parts.add(thundering ? "thundering" : "not thundering");
-                }
-
-                if (parts.isEmpty()) {
-                    return "Any weather";
-                } else {
-                    // join multiple conditions with “ and ”
-                    return "Weather must be " + String.join(" and ", parts);
-                }
-            }
-            case WorldRequirement wr: {
-                ResourceLocation id = wr.getIdentifier();
-                String namespace = id.getNamespace();
-                // e.g. "the_overworld" -> "The overworld"
-                String worldName = StringUtils.capitalize(id.getPath().replace('_', ' ').toLowerCase());
-                if ("minecraft".equals(namespace)) {
-                    return "In " + worldName;
-                } else {
-                    return String.format("In %s:%s", namespace, worldName);
-                }
-            }
-            default: {
-                return "Unknown Requirement";
+        if (req instanceof AttackDefenceRatioRequirement adr) {
+            switch (adr.getRatio()) {
+                case ATTACK_HIGHER:
+                    return Component.translatable("cobblemon_book_wiki.req.attack_higher").getString();
+                case DEFENCE_HIGHER:
+                    return Component.translatable("cobblemon_book_wiki.req.defence_higher").getString();
+                case EQUAL:
+                    return Component.translatable("cobblemon_book_wiki.req.attack_equals_defence").getString();
+                default:
+                    return Component.translatable("cobblemon_book_wiki.req.unknown").getString();
             }
         }
+
+        if (req instanceof BattleCriticalHitsRequirement bchr) {
+            return Component.translatable(
+                    "cobblemon_book_wiki.req.critical_hits",
+                    bchr.getAmount()
+            ).getString();
+        }
+
+        if (req instanceof BiomeRequirement br) {
+            RegistryLikeCondition<Biome> cond = br.getBiomeCondition();
+            RegistryLikeCondition<Biome> anti = br.getBiomeAnticondition();
+            Registry<Biome> biomeRegistry = ra.registryOrThrow(Registries.BIOME);
+
+            List<String> allowed = new ArrayList<>();
+            List<String> denied = new ArrayList<>();
+
+            biomeRegistry.keySet().forEach(rl -> {
+                Biome biome = biomeRegistry.get(rl);
+                if (cond != null && cond.fits(biome, biomeRegistry)) allowed.add(rl.getPath());
+                if (anti != null && anti.fits(biome, biomeRegistry)) denied.add(rl.getPath());
+            });
+
+            if (!allowed.isEmpty() && !denied.isEmpty())
+                return Component.translatable(
+                        "cobblemon_book_wiki.req.biomes.allowed_denied",
+                        String.join(", ", allowed),
+                        String.join(", ", denied)
+                ).getString();
+
+            if (!allowed.isEmpty())
+                return Component.translatable(
+                        "cobblemon_book_wiki.req.biomes.allowed",
+                        String.join(", ", allowed)
+                ).getString();
+
+            if (!denied.isEmpty())
+                return Component.translatable(
+                        "cobblemon_book_wiki.req.biomes.denied",
+                        String.join(", ", denied)
+                ).getString();
+
+            return Component.translatable("cobblemon_book_wiki.req.biomes.any").getString();
+        }
+
+        if (req instanceof BlocksTraveledRequirement btr) {
+            return Component.translatable(
+                    "cobblemon_book_wiki.req.blocks_travelled",
+                    btr.getAmount()
+            ).getString();
+        }
+
+        if (req instanceof DamageTakenRequirement dtr) {
+            return Component.translatable(
+                    "cobblemon_book_wiki.req.damage_taken",
+                    dtr.getAmount()
+            ).getString();
+        }
+
+        if (req instanceof DefeatRequirement dr) {
+            return Component.translatable(
+                    "cobblemon_book_wiki.req.defeat",
+                    dr.getAmount(),
+                    dr.getTarget().getOriginalString(),
+                    dr.getAmount() == 1 ? "" : "s"
+            ).getString();
+        }
+
+        if (req instanceof FriendshipRequirement fr) {
+            return Component.translatable(
+                    "cobblemon_book_wiki.req.friendship",
+                    fr.getAmount()
+            ).getString();
+        }
+
+        if (req instanceof HeldItemRequirement hir) {
+            Optional<HolderSet<Item>> cond = hir.getItemCondition().items();
+            if (cond.isEmpty())
+                return Component.translatable("cobblemon_book_wiki.req.held_item.unknown").getString();
+
+            List<String> items = cond.get().stream()
+                    .map(h -> h.value().getName(new ItemStack(h.value())).getString())
+                    .toList();
+
+            return Component.translatable(
+                    "cobblemon_book_wiki.req.held_item",
+                    String.join(", ", items)
+            ).getString();
+        }
+
+        if (req instanceof LevelRequirement lr) {
+            if (lr.getMaxLevel() == Integer.MAX_VALUE)
+                return Component.translatable(
+                        "cobblemon_book_wiki.req.level.min",
+                        lr.getMinLevel()
+                ).getString();
+
+            return Component.translatable(
+                    "cobblemon_book_wiki.req.level.range",
+                    lr.getMinLevel(),
+                    lr.getMaxLevel()
+            ).getString();
+        }
+
+        if (req instanceof MoonPhaseRequirement mpr) {
+            return Component.translatable(
+                    "cobblemon_book_wiki.req.moon_phase",
+                    mpr.getMoonPhase().name().toLowerCase().replace('_', ' ')
+            ).getString();
+        }
+
+        if (req instanceof MoveSetRequirement msr) {
+            return Component.translatable(
+                    "cobblemon_book_wiki.req.knows_move",
+                    StringUtils.capitalize(msr.getMove().getName())
+            ).getString();
+        }
+
+        if (req instanceof MoveTypeRequirement mtr) {
+            ElementalType type = mtr.getType();
+            return Component.translatable(
+                    "cobblemon_book_wiki.req.move_type",
+                    StringUtils.capitalize(type.getName().toLowerCase())
+            ).getString();
+        }
+
+        if (req instanceof PartyMemberRequirement pmr) {
+            return Component.translatable(
+                    pmr.getContains()
+                            ? "cobblemon_book_wiki.req.party.contains"
+                            : "cobblemon_book_wiki.req.party.not_contains",
+                    StringUtils.capitalize(pmr.getTarget().getOriginalString())
+            ).getString();
+        }
+
+        if (req instanceof StructureRequirement sr) {
+            List<String> allowed = new ArrayList<>();
+            List<String> denied = new ArrayList<>();
+
+            if (sr.getStructureCondition() instanceof StructureTagCondition stc)
+                allowed.add(stc.getTag().location().getPath());
+            if (sr.getStructureCondition() instanceof StructureIdentifierCondition sic)
+                allowed.add(sic.getIdentifier().getPath());
+
+            if (sr.getStructureAnticondition() instanceof StructureTagCondition stc)
+                denied.add(stc.getTag().location().getPath());
+            if (sr.getStructureAnticondition() instanceof StructureIdentifierCondition sic)
+                denied.add(sic.getIdentifier().getPath());
+
+            if (!allowed.isEmpty() && !denied.isEmpty())
+                return Component.translatable(
+                        "cobblemon_book_wiki.req.structures.allowed_denied",
+                        String.join(", ", allowed),
+                        String.join(", ", denied)
+                ).getString();
+
+            if (!allowed.isEmpty())
+                return Component.translatable(
+                        "cobblemon_book_wiki.req.structures.allowed",
+                        String.join(", ", allowed)
+                ).getString();
+
+            if (!denied.isEmpty())
+                return Component.translatable(
+                        "cobblemon_book_wiki.req.structures.denied",
+                        String.join(", ", denied)
+                ).getString();
+
+            return Component.translatable("cobblemon_book_wiki.req.structures.any").getString();
+        }
+
+        if (req instanceof TimeRangeRequirement tr) {
+            TimeRange range = tr.getRange();
+            if (range.getRanges().isEmpty())
+                return Component.translatable("cobblemon_book_wiki.req.time.any").getString();
+
+            List<String> segments = new ArrayList<>();
+            for (IntRange r : range.getRanges()) {
+                int sh = (r.getStart() / 1000 + 6) % 24;
+                int eh = (r.getEndInclusive() / 1000 + 6) % 24;
+                segments.add(String.format("%02d:00–%02d:00", sh, eh));
+            }
+
+            return Component.translatable(
+                    "cobblemon_book_wiki.req.time.range",
+                    String.join(", ", segments)
+            ).getString();
+        }
+
+        if (req instanceof WeatherRequirement wr) {
+            List<String> parts = new ArrayList<>();
+            if (wr.isRaining() != null)
+                parts.add(wr.isRaining()
+                        ? Component.translatable("cobblemon_book_wiki.common.raining").getString()
+                        : Component.translatable("cobblemon_book_wiki.common.not_raining").getString());
+            if (wr.isThundering() != null)
+                parts.add(wr.isThundering()
+                        ? Component.translatable("cobblemon_book_wiki.common.thundering").getString()
+                        : Component.translatable("cobblemon_book_wiki.common.not_thundering").getString());
+
+            if (parts.isEmpty())
+                return Component.translatable("cobblemon_book_wiki.req.weather.any").getString();
+
+            return Component.translatable(
+                    "cobblemon_book_wiki.req.weather.must_be",
+                    String.join(" y ", parts)
+            ).getString();
+        }
+
+        if (req instanceof WorldRequirement wr) {
+            ResourceLocation id = wr.getIdentifier();
+            String world = StringUtils.capitalize(id.getPath().replace('_', ' '));
+            return Component.translatable(
+                    "cobblemon_book_wiki.req.world",
+                    world
+            ).getString();
+        }
+
+        return Component.translatable("cobblemon_book_wiki.req.unknown").getString();
     }
 }

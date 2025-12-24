@@ -58,19 +58,17 @@ public class SpawnDetailPage {
                 .toList();
     }
 
-
     private static void handleSpawnDetail(PokemonSpawnDetail sd, List<Component> pages, int pageNo, int pageTotal) {
         MutableComponent page = Component.empty();
 
-        page.append(Component.literal(String.format("Spawn Detail %s/%s:\n\n", pageNo, pageTotal))
+        page.append(Component.translatable("cobblemon_book_wiki.spawn_detail.title", pageNo, pageTotal)
                 .withStyle(ChatFormatting.BOLD));
-
 
         Component weightComponent = Component.literal(String.format("(%s)\n", sd.getWeight()))
                 .withStyle(Style.EMPTY
                         .withHoverEvent(new HoverEvent(
                                 HoverEvent.Action.SHOW_TEXT,
-                                Component.literal("Weight")
+                                Component.translatable("cobblemon_book_wiki.spawn_detail.weight")
                         ))
                 );
         Component bucketComponent = Component.literal(String.format("%s ",
@@ -79,17 +77,17 @@ public class SpawnDetailPage {
 
         if (sd.getLevelRange() != null) {
             String levelRange = String.format("%s - %s", sd.getLevelRange().getFirst(), sd.getLevelRange().getEndInclusive());
-            page.append(Component.literal(String.format("Level %s\n", levelRange)));
+            page.append(Component.translatable("cobblemon_book_wiki.spawn_detail.level_range", levelRange));
         }
         page.append(Component.literal(String.format("%s \n\n", StringUtils.capitalize(sd.getDisplayName()))));
 
         MutableComponent condHover = Component.empty();
-        condHover.append("Conditions:\n");
-        if (sd.getConditions().isEmpty()) condHover.append("- None\n");
+        condHover.append(Component.translatable("cobblemon_book_wiki.spawn_detail.conditions_title")).append("\n");
+        if (sd.getConditions().isEmpty()) condHover.append(Component.translatable("cobblemon_book_wiki.spawn_detail.none")).append("\n");
         else sd.getConditions().forEach(c -> handleCondition(condHover, c));
 
         page.append(
-                Component.literal("[CONDITIONS]\n\n")
+                Component.translatable("cobblemon_book_wiki.spawn_detail.conditions_button")
                         .withStyle(Style.EMPTY
                                 .applyFormats(ChatFormatting.BOLD, ChatFormatting.DARK_GREEN)
                                 .withHoverEvent(new HoverEvent(
@@ -98,13 +96,12 @@ public class SpawnDetailPage {
                                 ))
                         ));
 
-
         MutableComponent antiCondHover = Component.empty();
-        antiCondHover.append("Anti Conditions:\n");
-        if (sd.getAnticonditions().isEmpty()) antiCondHover.append("- None\n");
+        antiCondHover.append(Component.translatable("cobblemon_book_wiki.spawn_detail.anticonditions_title")).append("\n");
+        if (sd.getAnticonditions().isEmpty()) antiCondHover.append(Component.translatable("cobblemon_book_wiki.spawn_detail.none")).append("\n");
         else sd.getAnticonditions().forEach(c -> handleCondition(antiCondHover, c));
         page.append(
-                Component.literal("[ANTI-CONDITIONS]")
+                Component.translatable("cobblemon_book_wiki.spawn_detail.anticonditions_button")
                         .withStyle(Style.EMPTY
                                 .applyFormats(ChatFormatting.BOLD, ChatFormatting.DARK_RED)
                                 .withHoverEvent(new HoverEvent(
@@ -116,62 +113,60 @@ public class SpawnDetailPage {
 
     }
 
-
     private static void handleCondition(MutableComponent hover, SpawningCondition<?> cond) {
         if (cond.isRaining() != null)
-            hover.append(String.format("Is raining: %s\n", cond.isRaining() ? "Yes" : "No"));
+            hover.append(Component.translatable("cobblemon_book_wiki.spawn_detail.is_raining", yesNo(cond.isRaining()))).append("\n");
         if (cond.isThundering() != null)
-            hover.append(String.format("Is thundering: %s\n", cond.isThundering() ? "Yes" : "No"));
+            hover.append(Component.translatable("cobblemon_book_wiki.spawn_detail.is_thundering", yesNo(cond.isThundering()))).append("\n");
         if (cond.isSlimeChunk() != null)
-            hover.append(String.format("Slime chunk: %s\n", cond.isSlimeChunk() ? "Yes" : "No"));
+            hover.append(Component.translatable("cobblemon_book_wiki.spawn_detail.slime_chunk", yesNo(cond.isSlimeChunk()))).append("\n");
         if (cond.getMoonPhase() != null)
-            hover.append(String.format("Moon phase: %s\n", cond.getMoonPhase()));
+            hover.append(Component.translatable("cobblemon_book_wiki.spawn_detail.moon_phase", cond.getMoonPhase())).append("\n");
         if (cond.getCanSeeSky() != null)
-            hover.append(String.format("Can see sky: %s\n", cond.getCanSeeSky() ? "Yes" : "No"));
+            hover.append(Component.translatable("cobblemon_book_wiki.spawn_detail.can_see_sky", yesNo(cond.getCanSeeSky()))).append("\n");
         if (cond.getMinY() != null)
-            hover.append(String.format("Min Y: %s\n", cond.getMinY()));
+            hover.append(Component.translatable("cobblemon_book_wiki.spawn_detail.min_y", cond.getMinY())).append("\n");
         if (cond.getMaxY() != null)
-            hover.append(String.format("Max Y: %s\n", cond.getMaxY()));
+            hover.append(Component.translatable("cobblemon_book_wiki.spawn_detail.max_y", cond.getMaxY())).append("\n");
 
         if (cond.getMinLight() != null || cond.getMaxLight() != null) {
             int min = requireNonNullElse(cond.getMinLight(), 0);
             int max = requireNonNullElse(cond.getMaxLight(), 15);
-            hover.append(String.format("Light level range: %d - %d\n", min, max));
+            hover.append(Component.translatable("cobblemon_book_wiki.spawn_detail.light_level_range", min, max)).append("\n");
         }
 
         if (cond.getMinSkyLight() != null || cond.getMaxSkyLight() != null) {
             int min = requireNonNullElse(cond.getMinSkyLight(), 0);
             int max = requireNonNullElse(cond.getMaxSkyLight(), 15);
-            hover.append(String.format("Sky light level range: %d - %d\n", min, max));
+            hover.append(Component.translatable("cobblemon_book_wiki.spawn_detail.sky_light_level_range", min, max)).append("\n");
         }
 
         if (cond instanceof AreaSpawningCondition asCond) {
             if (asCond.getMinHeight() != null)
-                hover.append(String.format("Min Height: %s\n", asCond.getMinHeight()));
+                hover.append(Component.translatable("cobblemon_book_wiki.spawn_detail.min_height", asCond.getMinHeight())).append("\n");
             if (asCond.getMaxHeight() != null)
-                hover.append(String.format("Max Height: %s\n", asCond.getMaxHeight()));
+                hover.append(Component.translatable("cobblemon_book_wiki.spawn_detail.max_height", asCond.getMaxHeight())).append("\n");
             if (asCond.getNeededNearbyBlocks() != null) {
                 String blocks = asCond.getNeededNearbyBlocks().stream().map(rlc -> {
                     if (rlc instanceof BlockIdentifierCondition bic)
                         return bic.getIdentifier().getPath();
-
                     if (rlc instanceof BlockTagCondition btc)
                         return btc.getTag().location().getPath();
                     return "unknown";
                 }).collect(Collectors.joining(", "));
-                hover.append(String.format("Nearby Blocks: %s\n", blocks));
+                hover.append(Component.translatable("cobblemon_book_wiki.spawn_detail.nearby_blocks", blocks)).append("\n");
             }
         }
 
         if (cond instanceof FishingSpawningCondition fCond) {
             if (fCond.getMinLureLevel() != null)
-                hover.append(String.format("Min Lure Level: %s\n", fCond.getMinLureLevel()));
+                hover.append(Component.translatable("cobblemon_book_wiki.spawn_detail.min_lure_level", fCond.getMinLureLevel())).append("\n");
             if (fCond.getMaxLureLevel() != null)
-                hover.append(String.format("Max Lure Level: %s\n", fCond.getMaxLureLevel()));
+                hover.append(Component.translatable("cobblemon_book_wiki.spawn_detail.max_lure_level", fCond.getMaxLureLevel())).append("\n");
             if (fCond.getBait() != null)
-                hover.append(String.format("Bait: %s\n", fCond.getBait()));
+                hover.append(Component.translatable("cobblemon_book_wiki.spawn_detail.bait", fCond.getBait())).append("\n");
             if (fCond.getRodType() != null)
-                hover.append(String.format("Rod Type: %s\n", fCond.getRodType()));
+                hover.append(Component.translatable("cobblemon_book_wiki.spawn_detail.rod_type", fCond.getRodType())).append("\n");
         }
 
         if (cond instanceof GroundedSpawningCondition gCond) {
@@ -179,29 +174,28 @@ public class SpawnDetailPage {
                 String blocks = gCond.getNeededBaseBlocks().stream().map(rlc -> {
                     if (rlc instanceof BlockIdentifierCondition bic)
                         return bic.getIdentifier().getPath();
-
                     if (rlc instanceof BlockTagCondition btc)
                         return btc.getTag().location().getPath();
                     return "unknown";
                 }).collect(Collectors.joining(", "));
-                hover.append(String.format("Base Blocks: %s\n", blocks));
+                hover.append(Component.translatable("cobblemon_book_wiki.spawn_detail.base_blocks", blocks)).append("\n");
             }
         }
 
         if (cond instanceof SubmergedSpawningCondition sCond) {
             if (sCond.getMinDepth() != null)
-                hover.append(String.format("Min Depth: %s\n", sCond.getMinDepth()));
+                hover.append(Component.translatable("cobblemon_book_wiki.spawn_detail.min_depth", sCond.getMinDepth())).append("\n");
             if (sCond.getMaxDepth() != null)
-                hover.append(String.format("Max Depth: %s\n", sCond.getMaxDepth()));
+                hover.append(Component.translatable("cobblemon_book_wiki.spawn_detail.max_depth", sCond.getMaxDepth())).append("\n");
             if (sCond.getFluidIsSource() != null)
-                hover.append(String.format("Needs Source Block: %s\n", sCond.getFluidIsSource() ? "Yes" : "No"));
+                hover.append(Component.translatable("cobblemon_book_wiki.spawn_detail.needs_source_block", yesNo(sCond.getFluidIsSource()))).append("\n");
             if (sCond.getFluid() != null) {
                 String fluidString = "Unknown";
                 if (sCond.getFluid() instanceof FluidTagCondition ftc)
                     fluidString = ftc.getTag().location().getPath();
                 if (sCond.getFluid() instanceof FluidIdentifierCondition fic)
                     fluidString = fic.getIdentifier().getPath();
-                hover.append(String.format("Fluid: %s\n", fluidString));
+                hover.append(Component.translatable("cobblemon_book_wiki.spawn_detail.fluid", fluidString)).append("\n");
             }
         }
 
@@ -214,12 +208,12 @@ public class SpawnDetailPage {
                     break;
                 }
             }
-            hover.append(String.format("Time: %s\n", timeName));
+            hover.append(Component.translatable("cobblemon_book_wiki.spawn_detail.time", timeName)).append("\n");
         }
 
         Set<RegistryLikeCondition<Biome>> biomeConds = cond.getBiomes();
         if (biomeConds != null && !biomeConds.isEmpty()) {
-            hover.append("Biomes:\n");
+            hover.append(Component.translatable("cobblemon_book_wiki.spawn_detail.biomes_title")).append("\n");
             for (RegistryLikeCondition<Biome> rlc : biomeConds) {
                 ResourceLocation resourceLocation = null;
                 if (rlc instanceof BiomeTagCondition) {
@@ -236,15 +230,13 @@ public class SpawnDetailPage {
 
                     hover.append(Component.literal(String.format("- %s\n", pretty)));
                 } else {
-                    hover.append(Component.literal("- Something went wrong!"));
+                    hover.append(Component.literal("- ¡Algo salió mal!"));
                 }
-
-
             }
         }
 
         if (cond.getStructures() != null && !cond.getStructures().isEmpty()) {
-            hover.append("Structures:\n");
+            hover.append(Component.translatable("cobblemon_book_wiki.spawn_detail.structures_title")).append("\n");
             for (Either<ResourceLocation, TagKey<Structure>> either : cond.getStructures()) {
                 ResourceLocation resourceLocation = null;
 
@@ -260,10 +252,14 @@ public class SpawnDetailPage {
 
                     hover.append(Component.literal(String.format("- %s\n", pretty)));
                 } else {
-                    hover.append(Component.literal("- Something went wrong!"));
+                    hover.append(Component.literal("- ¡Algo salió mal!"));
                 }
             }
         }
     }
 
+    private static String yesNo(Boolean value) {
+        return value ? Component.translatable("cobblemon_book_wiki.common.yes").getString() :
+                Component.translatable("cobblemon_book_wiki.common.no").getString();
+    }
 }
