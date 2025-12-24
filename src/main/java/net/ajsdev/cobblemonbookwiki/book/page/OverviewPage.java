@@ -33,7 +33,6 @@ public class OverviewPage {
         page.append(formatBreeding(formData, species));
         page.append(formatAbilities(formData));
 
-
         return page;
     }
 
@@ -41,7 +40,10 @@ public class OverviewPage {
         MutableComponent name = Component.literal(String.format("%s\n", fullName)).withStyle(ChatFormatting.BOLD);
         if (!species.getImplemented()) name.setStyle(
                 Style.EMPTY.applyFormats(ChatFormatting.RED, ChatFormatting.BOLD)
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Not Implemented!"))));
+                        .withHoverEvent(new HoverEvent(
+                                HoverEvent.Action.SHOW_TEXT,
+                                Component.translatable("cobblemon_book_wiki.not_implemented")
+                        )));
         return name;
     }
 
@@ -59,37 +61,36 @@ public class OverviewPage {
 
     private static MutableComponent formatBaseStats(FormData formData) {
         Map<Stat, Integer> baseStats = formData.getBaseStats();
-        MutableComponent hover = Component.literal("Base Stats:\n");
+        MutableComponent hover = Component.translatable("cobblemon_book_wiki.base_stats.title").append("\n");
 
-        hover.append(Component.literal(String.format("HP: %s\n", baseStats.get(Stats.HP))));
-        hover.append(Component.literal(String.format("Attack: %s\n", baseStats.get(Stats.ATTACK))));
-        hover.append(Component.literal(String.format("Defence: %s\n", baseStats.get(Stats.DEFENCE))));
-        hover.append(Component.literal(String.format("Special Attack: %s\n", baseStats.get(Stats.SPECIAL_ATTACK))));
-        hover.append(Component.literal(String.format("Special Defense: %s\n", baseStats.get(Stats.SPECIAL_DEFENCE))));
-        hover.append(Component.literal(String.format("Speed: %s\n", baseStats.get(Stats.SPEED))));
+        hover.append(Component.translatable("cobblemon_book_wiki.stat.hp", baseStats.get(Stats.HP))).append("\n");
+        hover.append(Component.translatable("cobblemon_book_wiki.stat.attack", baseStats.get(Stats.ATTACK))).append("\n");
+        hover.append(Component.translatable("cobblemon_book_wiki.stat.defence", baseStats.get(Stats.DEFENCE))).append("\n");
+        hover.append(Component.translatable("cobblemon_book_wiki.stat.special_attack", baseStats.get(Stats.SPECIAL_ATTACK))).append("\n");
+        hover.append(Component.translatable("cobblemon_book_wiki.stat.special_defense", baseStats.get(Stats.SPECIAL_DEFENCE))).append("\n");
+        hover.append(Component.translatable("cobblemon_book_wiki.stat.speed", baseStats.get(Stats.SPEED))).append("\n");
 
         int total = baseStats.entrySet().stream()
                 .filter(entry -> entry.getKey().getType() == Stat.Type.PERMANENT)
                 .mapToInt(Map.Entry::getValue)
                 .sum();
 
-        hover.append(Component.literal(String.format("\nStat Total: %s", total)));
+        hover.append("\n").append(Component.translatable("cobblemon_book_wiki.stat_total", total));
 
-        return Component.literal("[BASE STATS]\n")
+        return Component.translatable("cobblemon_book_wiki.base_stats.label")
+                .append("\n")
                 .withStyle(Style.EMPTY
                         .applyFormats(ChatFormatting.BOLD, ChatFormatting.BLUE)
-                        .withHoverEvent(new HoverEvent(
-                                HoverEvent.Action.SHOW_TEXT,
-                                hover
-                        ))
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover))
                 );
     }
 
     private static MutableComponent formatTraining(FormData formData) {
         MutableComponent hover = Component.empty();
+
         // EV Yield
         Map<Stat, Integer> evYield = formData.getEvYield();
-        hover.append("EV Yield:\n");
+        hover.append(Component.translatable("cobblemon_book_wiki.ev_yield.title")).append("\n");
 
         int total = 0;
         for (Map.Entry<Stat, Integer> e : evYield.entrySet()) {
@@ -97,62 +98,59 @@ public class OverviewPage {
             int value = e.getValue();
             total += value;
             if (value > 0) {
-                hover.append(Component.literal(String.format("- %s ", value)));
-                hover.append(stat.getDisplayName());
-                hover.append("\n");
+                hover.append(Component.translatable("cobblemon_book_wiki.ev_yield.entry", value))
+                        .append(stat.getDisplayName())
+                        .append("\n");
             }
-
         }
-        if (total == 0) hover.append("- None\n");
+        if (total == 0) hover.append(Component.translatable("cobblemon_book_wiki.none")).append("\n");
         hover.append(" \n");
 
+        hover.append(Component.translatable("cobblemon_book_wiki.catch_rate", formData.getCatchRate())).append("\n");
+        hover.append(Component.translatable("cobblemon_book_wiki.base_friendship", formData.getBaseFriendship())).append("\n");
+        hover.append(Component.translatable("cobblemon_book_wiki.base_exp", formData.getBaseExperienceYield())).append("\n");
 
-        hover.append(String.format("Catch Rate: %s\n", formData.getCatchRate()));
-        hover.append(String.format("Base Friendship: %s\n", formData.getBaseFriendship()));
-        hover.append(String.format("Base Exp: %s\n", formData.getBaseExperienceYield()));
-        String growthRate = StringUtils.capitalize(formData.getExperienceGroup().getName().replace("_", " "));
-        hover.append(String.format("Growth Rate: %s", growthRate));
+        String growthRateRaw = formData.getExperienceGroup().getName(); // e.g. "MEDIUM_SLOW"
+        String growthRatePretty = StringUtils.capitalize(growthRateRaw.replace("_", " "));
+        // Mejorable: mapear a claves por enum; por ahora lo hacemos traducible con fallback "pretty"
+        hover.append(Component.translatable("cobblemon_book_wiki.growth_rate", growthRatePretty));
 
-        return Component.literal("[TRAINING INFO]\n")
+        return Component.translatable("cobblemon_book_wiki.training_info.label")
+                .append("\n")
                 .withStyle(Style.EMPTY
                         .applyFormats(ChatFormatting.BOLD, ChatFormatting.DARK_GREEN)
-                        .withHoverEvent(new HoverEvent(
-                                HoverEvent.Action.SHOW_TEXT,
-                                hover
-                        ))
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover))
                 );
     }
 
     private static MutableComponent formatBreeding(FormData formData, Species species) {
         MutableComponent hover = Component.empty();
 
-        hover.append("Egg Groups:\n");
+        hover.append(Component.translatable("cobblemon_book_wiki.egg_groups.title")).append("\n");
         for (EggGroup eggGroup : formData.getEggGroups()) {
-            hover.append(Component.literal("- "))
+            hover.append(Component.translatable("cobblemon_book_wiki.list_bullet"))
                     .append(Component.literal(eggGroup.getShowdownID()))
-                    .append(Component.literal("\n"));
+                    .append("\n");
         }
+
         hover.append(" \n");
         hover.append(formatGenderRatio(formData));
 
         int eggSteps = species.getEggCycles() * 257;
-        hover.append(String.format("Egg Cycles: %s (%s steps)", species.getEggCycles(), eggSteps));
+        hover.append(Component.translatable("cobblemon_book_wiki.egg_cycles", species.getEggCycles(), eggSteps));
 
-        return Component.literal("[BREEDING INFO]\n")
+        return Component.translatable("cobblemon_book_wiki.breeding_info.label")
+                .append("\n")
                 .withStyle(Style.EMPTY
                         .applyFormats(ChatFormatting.BOLD, ChatFormatting.LIGHT_PURPLE)
-                        .withHoverEvent(new HoverEvent(
-                                HoverEvent.Action.SHOW_TEXT,
-                                hover
-                        ))
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover))
                 );
     }
 
     private static Component formatGenderRatio(FormData formData) {
-        MutableComponent genderRatio = Component.empty();
-        genderRatio.append("Gender Ratio: ");
+        MutableComponent genderRatio = Component.translatable("cobblemon_book_wiki.gender_ratio").append(" ");
         if (formData.getMaleRatio() == -1) {
-            return genderRatio.append(Component.literal("Genderless\n")
+            return genderRatio.append(Component.translatable("cobblemon_book_wiki.genderless").append("\n")
                     .withStyle(ChatFormatting.ITALIC, ChatFormatting.DARK_GRAY));
         }
 
@@ -171,7 +169,7 @@ public class OverviewPage {
 
     private static Component formatAbilities(FormData formData) {
         MutableComponent abilities = Component.empty();
-        abilities.append(Component.literal("\nAbilities:\n").withStyle(ChatFormatting.BOLD));
+        abilities.append(Component.translatable("cobblemon_book_wiki.abilities").append("\n").withStyle(ChatFormatting.BOLD));
 
         List<PotentialAbility> potentialAbilities = formData.getAbilities().getMapping().values()
                 .stream()
@@ -195,7 +193,6 @@ public class OverviewPage {
                 .filter(potentialAbility -> !commonAbilityNames.contains(potentialAbility.getName()))
                 .toList();
 
-
         for (AbilityTemplate template : commonAbilities) {
             Component name = Component.translatable(template.getDisplayName());
             Component description = Component.translatable(template.getDescription());
@@ -204,9 +201,9 @@ public class OverviewPage {
                     style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, description))
             );
 
-            abilities.append(Component.literal("- ").withStyle())
+            abilities.append(Component.translatable("cobblemon_book_wiki.list_bullet"))
                     .append(entry)
-                    .append(Component.literal("\n"));
+                    .append("\n");
         }
 
         for (AbilityTemplate template : hiddenAbilities) {
@@ -217,13 +214,12 @@ public class OverviewPage {
                     style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, description))
             );
 
-            abilities.append(Component.literal("- "))
-                    .append(Component.literal("[HA] ").withStyle(ChatFormatting.RED))
+            abilities.append(Component.translatable("cobblemon_book_wiki.list_bullet"))
+                    .append(Component.translatable("cobblemon_book_wiki.hidden_ability_prefix").withStyle(ChatFormatting.RED))
                     .append(entry)
-                    .append(Component.literal("\n"));
+                    .append("\n");
         }
 
         return abilities;
     }
-
 }

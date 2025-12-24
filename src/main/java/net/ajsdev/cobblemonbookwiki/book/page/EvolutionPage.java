@@ -29,88 +29,135 @@ public class EvolutionPage {
 
     public static List<MutableComponent> build(FormData formData, RegistryAccess ra) {
         List<MutableComponent> components = new ArrayList<>();
-        components.add(Component.literal("Evolutions: \n\n").withStyle(ChatFormatting.BOLD));
+
+        components.add(
+                Component.translatable("cobblemon_book_wiki.evolutions.title")
+                        .append("\n\n")
+                        .withStyle(ChatFormatting.BOLD)
+        );
 
         List<Evolution> evolutions = formData.getEvolutions().stream().toList();
         if (evolutions.isEmpty()) {
-            components.add(Component.literal("This pokemon does not evolve."));
+            components.add(
+                    Component.translatable("cobblemon_book_wiki.evolutions.none")
+            );
         }
-
 
         for (Evolution evolution : evolutions) {
             MutableComponent hover = Component.empty();
 
             switch (evolution) {
-                case LevelUpEvolution ignored: {
-                    hover.append("Level Up Evolution\n");
-                    break;
+                case LevelUpEvolution ignored -> {
+                    hover.append(
+                            Component.translatable("cobblemon_book_wiki.evolution.type.level_up")
+                    ).append("\n");
                 }
-                case TradeEvolution te: {
-                    hover.append("Trade Evolution\n");
+
+                case TradeEvolution te -> {
+                    hover.append(
+                            Component.translatable("cobblemon_book_wiki.evolution.type.trade")
+                    ).append("\n");
+
                     if (te.getRequiredContext().getSpecies() != null) {
                         Pokemon tradeForPokemon = te.getRequiredContext().create();
-                        String tradeForName = WikiBookBuilder.getFullNameString(tradeForPokemon.getForm(),
-                                tradeForPokemon.getSpecies());
-                        hover.append(String.format("- Trade For: %s\n", tradeForName));
+                        String tradeForName = WikiBookBuilder.getFullNameString(
+                                tradeForPokemon.getForm(),
+                                tradeForPokemon.getSpecies()
+                        );
+
+                        hover.append(
+                                Component.translatable(
+                                        "cobblemon_book_wiki.evolution.trade_for",
+                                        tradeForName
+                                )
+                        ).append("\n");
                     }
-                    break;
                 }
-                case BlockClickEvolution bce: {
-                    hover.append("Block Click Evolution\n");
+
+                case BlockClickEvolution bce -> {
+                    hover.append(
+                            Component.translatable("cobblemon_book_wiki.evolution.type.block_click")
+                    ).append("\n");
+
                     RegistryLikeCondition<Block> cond = bce.getRequiredContext();
                     String blockString = "unknown";
+
                     if (cond instanceof BlockTagCondition btc)
                         blockString = btc.getTag().location().getPath();
                     if (cond instanceof BlockIdentifierCondition bic)
                         blockString = bic.getIdentifier().getPath();
-                    MutableComponent bceComponent = Component.literal("- Interact With: " + blockString);
-                    hover.append(bceComponent);
-                    break;
+
+                    hover.append(
+                            Component.translatable(
+                                    "cobblemon_book_wiki.evolution.interact_with",
+                                    blockString
+                            )
+                    );
                 }
 
-                case ItemInteractionEvolution iie: {
-                    hover.append("Use Item Evolution\n");
-                    Optional<HolderSet<Item>> items = iie.getRequiredContext().items();
+                case ItemInteractionEvolution iie -> {
+                    hover.append(
+                            Component.translatable("cobblemon_book_wiki.evolution.type.use_item")
+                    ).append("\n");
 
+                    Optional<HolderSet<Item>> items = iie.getRequiredContext().items();
                     if (items.isPresent()) {
-                        items.get().stream().forEach(itemHolder -> {
+                        items.get().forEach(itemHolder -> {
                             Item item = itemHolder.value();
                             Component itemName = item.getName(new ItemStack(item));
-                            MutableComponent iieComponent = Component.literal("- Item: ").append(itemName);
-                            hover.append(iieComponent);
+                            hover.append(
+                                    Component.translatable(
+                                            "cobblemon_book_wiki.evolution.item",
+                                            itemName
+                                    )
+                            ).append("\n");
                         });
                     } else {
-                        MutableComponent iieComponent = Component.literal("- Item: unknown");
-                        hover.append(iieComponent);
+                        hover.append(
+                                Component.translatable(
+                                        "cobblemon_book_wiki.evolution.item",
+                                        Component.translatable("cobblemon_book_wiki.unknown")
+                                )
+                        ).append("\n");
                     }
-                    break;
-                }
-                default: {
-                    hover.append("Unknown?\n");
                 }
 
+                default -> {
+                    hover.append(
+                            Component.translatable("cobblemon_book_wiki.evolution.type.unknown")
+                    ).append("\n");
+                }
             }
 
-
             hover.append(" \n");
+
             if (!evolution.getRequirements().isEmpty()) {
-                hover.append(Component.literal("Requirements: \n").withStyle(ChatFormatting.BOLD));
+                hover.append(
+                        Component.translatable("cobblemon_book_wiki.evolution.requirements")
+                                .withStyle(ChatFormatting.BOLD)
+                ).append("\n");
 
                 for (Requirement req : evolution.getRequirements()) {
-                    hover.append(Component.literal(EvolutionRequirementUtil.getReadableString(req, ra)))
-                            .append("\n");
-
+                    hover.append(
+                            Component.literal(
+                                    EvolutionRequirementUtil.getReadableString(req, ra)
+                            )
+                    ).append("\n");
                 }
             }
 
             Pokemon evo = evolution.getResult().create();
-            String evoName = WikiBookBuilder.getFullNameString(evo.getForm(), evo.getSpecies());
-            String name = evolution.getResult().getSpecies() == null ?
-                    "Error"
+            String evoName = WikiBookBuilder.getFullNameString(
+                    evo.getForm(),
+                    evo.getSpecies()
+            );
+
+            String name = evolution.getResult().getSpecies() == null
+                    ? "Error"
                     : evoName;
 
             components.add(
-                    Component.literal(String.format("%s\n\n", name))
+                    Component.literal(name + "\n\n")
                             .withStyle(Style.EMPTY
                                     .applyFormats(ChatFormatting.BOLD, ChatFormatting.BLUE)
                                     .withHoverEvent(new HoverEvent(
@@ -123,8 +170,10 @@ public class EvolutionPage {
                                                     evo.getSpecies().getName().toLowerCase() + " " +
                                                     evo.getForm().getName().toLowerCase()
                                     ))
-                            ));
+                            )
+            );
         }
+
         return components;
     }
 }
